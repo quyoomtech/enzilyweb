@@ -3,7 +3,7 @@ import VoiceCallController from './VoiceCallController';
 
 export default function DebateView() {
   return (
-    <div id="debate-viewport" className="flex flex-col h-full bg-[#0a0a0a] text-[#e0e0e0]">
+    <div id="debate-viewport" className="flex flex-col h-full bg-transparent text-zinc-800">
       <VoiceCallController
         mode="debate"
         title="Interactive Academic Debate"

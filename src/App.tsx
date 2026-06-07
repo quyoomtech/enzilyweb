@@ -61,35 +61,35 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#060606] text-[#e0e0e0] flex items-center justify-center font-sans antialiased p-0 sm:p-4">
-      {/* Sophisticated Dark device frame style container */}
-      <div className="w-full max-w-md bg-[#0a0a0a] text-[#e0e0e0] sm:rounded-3xl sm:shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden min-h-screen sm:min-h-[812px] flex flex-col justify-between border border-[#ffffff12]">
+    <div className="min-h-screen bg-gradient-to-br from-[#fff2f4] via-[#faf5f6] to-[#fff2f5] text-zinc-800 flex items-center justify-center font-sans antialiased p-0 sm:p-4">
+      {/* Sophisticated White & Pink device frame style container */}
+      <div className="w-full max-w-md bg-white text-zinc-800 sm:rounded-3xl sm:shadow-[0_12px_40px_rgba(219,39,119,0.08)] overflow-hidden min-h-screen sm:min-h-[812px] flex flex-col justify-between border border-pink-100/60">
         
         {/* TOP BRAND HEADER */}
-        <header id="brand-header" className="bg-[#0d0d0d] px-6 pt-5 pb-3 border-b border-[#ffffff10]">
+        <header id="brand-header" className="bg-white px-6 pt-5 pb-3 border-b border-pink-100/40">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2.5">
-              <span className="p-1.5 rounded-lg bg-gradient-to-tr from-[#6366f1] to-[#a855f7] text-white shadow-lg shadow-indigo-500/10 animate-spin-slow">
+              <span className="p-1.5 rounded-lg bg-gradient-to-tr from-pink-500 to-rose-400 text-white shadow-lg shadow-pink-500/10 animate-spin-slow">
                 <Sparkles size={16} />
               </span>
-              <span className="font-serif italic font-normal tracking-tight text-xl text-white">
-                Enzily<span className="text-indigo-400 font-sans font-extrabold">.ai</span>
+              <span className="font-serif italic font-semibold tracking-tight text-xl text-zinc-900">
+                Enzily<span className="text-pink-500 font-sans font-extrabold">.ai</span>
               </span>
             </div>
 
-            {/* Session Timer styled precisely matching image */}
-            <div className="flex items-center gap-1.5 bg-[#161616] text-[#888] px-3 py-1.5 rounded-full border border-white/5 font-mono font-medium text-xs">
-              <Clock size={13} className="text-indigo-400" />
+            {/* Session Timer styled precisely matching layout instructions */}
+            <div className="flex items-center gap-1.5 bg-pink-50/70 text-pink-600 px-3 py-1.5 rounded-full border border-pink-100/40 font-mono font-medium text-xs">
+              <Clock size={13} className="text-pink-500" />
               <span>{sessionClock}</span>
             </div>
           </div>
 
           {/* Browser Tabs Routing System */}
-          <nav className="flex items-center justify-between border-b border-[#ffffff08] mt-5 pt-1">
+          <nav className="flex items-center justify-between border-b border-pink-100/20 mt-5 pt-1">
             <button
               onClick={() => handleTabChange('translator')}
               className={`flex-1 flex flex-col items-center pb-2.5 relative transition-colors ${
-                activeTab === 'translator' ? 'text-white font-bold' : 'text-[#666] hover:text-[#999] font-medium'
+                activeTab === 'translator' ? 'text-pink-600 font-bold' : 'text-zinc-400 hover:text-zinc-600 font-medium'
               } cursor-pointer`}
             >
               <div className="flex items-center gap-1.5 text-[13px]">
@@ -99,7 +99,7 @@ export default function App() {
               {activeTab === 'translator' && (
                 <motion.div 
                   layoutId="active-nav-indicator" 
-                  className="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-[#6366f1] to-[#a855f7]" 
+                  className="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-pink-500 to-rose-450" 
                 />
               )}
             </button>
@@ -107,7 +107,7 @@ export default function App() {
             <button
               onClick={() => handleTabChange('practice')}
               className={`flex-1 flex flex-col items-center pb-2.5 relative transition-colors ${
-                activeTab === 'practice' ? 'text-white font-bold' : 'text-[#666] hover:text-[#999] font-medium'
+                activeTab === 'practice' ? 'text-pink-600 font-bold' : 'text-zinc-400 hover:text-zinc-600 font-medium'
               } cursor-pointer`}
             >
               <div className="flex items-center gap-1.5 text-[13px]">
@@ -117,7 +117,7 @@ export default function App() {
               {activeTab === 'practice' && (
                 <motion.div 
                   layoutId="active-nav-indicator" 
-                  className="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-[#6366f1] to-[#a855f7]" 
+                  className="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-pink-500 to-rose-450" 
                 />
               )}
             </button>
@@ -125,7 +125,7 @@ export default function App() {
             <button
               onClick={() => handleTabChange('debate')}
               className={`flex-1 flex flex-col items-center pb-2.5 relative transition-colors ${
-                activeTab === 'debate' ? 'text-white font-bold' : 'text-[#666] hover:text-[#999] font-medium'
+                activeTab === 'debate' ? 'text-pink-600 font-bold' : 'text-zinc-400 hover:text-zinc-600 font-medium'
               } cursor-pointer`}
             >
               <div className="flex items-center gap-1.5 text-[13px]">
@@ -135,7 +135,7 @@ export default function App() {
               {activeTab === 'debate' && (
                 <motion.div 
                   layoutId="active-nav-indicator" 
-                  className="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-[#6366f1] to-[#a855f7]" 
+                  className="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-pink-500 to-rose-450" 
                 />
               )}
             </button>
@@ -143,7 +143,7 @@ export default function App() {
         </header>
 
         {/* MAIN ROUTED VIEWS VIEWPORT */}
-        <main className="flex-1 overflow-hidden h-[calc(100vh-140px)] sm:h-[640px] flex flex-col justify-between bg-[#0a0a0a]">
+        <main className="flex-1 overflow-hidden h-[calc(100vh-140px)] sm:h-[640px] flex flex-col justify-between bg-gradient-to-b from-white to-[#fffcfd]">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -151,7 +151,7 @@ export default function App() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.15 }}
-              className="flex-1 flex flex-col h-full h-[100%]"
+              className="flex-1 flex flex-col h-full"
             >
               {activeTab === 'translator' && <TranslatorView />}
               {activeTab === 'practice' && <PracticeView />}
@@ -162,12 +162,11 @@ export default function App() {
 
         {/* Read-only Alert Warning Banner when API Key is missing */}
         {!hasApiKey && (
-          <div className="bg-amber-950/80 border-t border-amber-500/20 text-amber-300 text-[10px] py-1.5 px-4 text-center tracking-normal font-medium font-sans">
+          <div className="bg-rose-50 border-t border-rose-100 text-rose-600 text-[10px] py-1.5 px-4 text-center tracking-normal font-medium font-sans">
             Please configure GEMINI_API_KEY in Settings &gt; Secrets to enable AI functionality.
           </div>
         )}
       </div>
     </div>
-
   );
 }

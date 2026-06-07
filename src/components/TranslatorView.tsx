@@ -3,7 +3,7 @@ import VoiceCallController from './VoiceCallController';
 
 export default function TranslatorView() {
   return (
-    <div id="translator-viewport" className="flex flex-col h-full bg-[#0a0a0a] text-[#e0e0e0]">
+    <div id="translator-viewport" className="flex flex-col h-full bg-transparent text-zinc-800">
       <VoiceCallController
         mode="translator"
         title="Real-Time Voice Translator"

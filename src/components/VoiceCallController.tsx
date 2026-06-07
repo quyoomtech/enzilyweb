@@ -305,25 +305,25 @@ export default function VoiceCallController({
   // Theme Styling Configuration
   const themeStyles = {
     indigo: {
-      accent: 'from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500',
-      outline: 'border-indigo-500/10 bg-indigo-950/20 text-[#818cf8]',
-      ring: 'bg-indigo-500/20',
-      orb: 'bg-indigo-500',
-      glow: 'shadow-[0_0_60px_rgba(99,102,241,0.45)]'
+      accent: 'from-pink-500 to-[#ec4899] hover:from-pink-400 hover:to-[#f43f5e]',
+      outline: 'border-pink-200/50 bg-pink-50 text-pink-600',
+      ring: 'bg-pink-300/25',
+      orb: 'bg-pink-500',
+      glow: 'shadow-[0_0_40px_rgba(236,72,153,0.25)]'
     },
     emerald: {
-      accent: 'from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500',
-      outline: 'border-emerald-500/10 bg-emerald-950/20 text-[#34d399]',
-      ring: 'bg-emerald-500/20',
-      orb: 'bg-emerald-500',
-      glow: 'shadow-[0_0_60px_rgba(16,185,129,0.45)]'
+      accent: 'from-[#fb7185] to-rose-500 hover:from-[#f43f5e] hover:to-rose-450',
+      outline: 'border-rose-200/50 bg-rose-50 text-rose-500',
+      ring: 'bg-rose-300/25',
+      orb: 'bg-rose-500',
+      glow: 'shadow-[0_0_40px_rgba(244,63,94,0.25)]'
     },
     violet: {
-      accent: 'from-[#a855f7] to-[#ec4899] hover:from-[#b55fe6] hover:to-[#f43f5e]',
-      outline: 'border-[#a855f7]/10 bg-purple-950/20 text-[#c084fc]',
-      ring: 'bg-[#a855f7]/20',
-      orb: 'bg-[#a855f7]',
-      glow: 'shadow-[0_0_60px_rgba(168,85,247,0.45)]'
+      accent: 'from-[#d946ef] to-[#ec4899] hover:from-[#c2410c] hover:to-[#db2777]',
+      outline: 'border-fuchsia-200/50 bg-fuchsia-50/70 text-fuchsia-600',
+      ring: 'bg-fuchsia-300/25',
+      orb: 'bg-fuchsia-500',
+      glow: 'shadow-[0_0_40px_rgba(217,70,239,0.25)]'
     }
   }[themeColor];
 
@@ -346,7 +346,7 @@ export default function VoiceCallController({
                   {emoji} Real-Time Voice
                 </span>
                 {isConnecting && (
-                  <span className="text-[10px] uppercase font-mono bg-zinc-800 text-zinc-300 px-3 py-1 rounded-full flex items-center gap-1.5 animate-pulse">
+                  <span className="text-[10px] uppercase font-mono bg-pink-50 text-pink-500 border border-pink-100/50 px-3 py-1 rounded-full flex items-center gap-1.5 animate-pulse">
                     <Loader2 size={10} className="animate-spin" />
                     Connecting
                   </span>
@@ -354,7 +354,7 @@ export default function VoiceCallController({
               </div>
 
               <div className="space-y-2">
-                <h1 className="text-3xl font-serif font-light text-white tracking-tight leading-snug">
+                <h1 className="text-3xl font-serif font-light text-zinc-900 tracking-tight leading-snug">
                   {title}
                 </h1>
                 <p className="text-zinc-500 text-xs leading-relaxed font-normal">
@@ -363,22 +363,22 @@ export default function VoiceCallController({
               </div>
 
               {/* Minimal Aesthetic Ambient Card matching layout instructions */}
-              <div className="p-4 rounded-2xl bg-zinc-950 border border-white/5 space-y-1 text-center py-6">
+              <div className="p-4 rounded-2xl bg-pink-50/20 border border-pink-100/40 space-y-1 text-center py-6 shadow-sm">
                 <div className="flex justify-center mb-2.5">
                   <div className={`h-1.5 w-1.5 rounded-full ${themeStyles.orb} animate-pulse`} />
                 </div>
-                <p className="text-[11px] font-mono uppercase tracking-widest text-zinc-500">
+                <p className="text-[11px] font-mono uppercase tracking-widest text-[#a1a1aa] font-medium">
                   Ready to stream duplex audio
                 </p>
-                <p className="text-[10px] text-zinc-600">
+                <p className="text-[10px] text-zinc-400">
                   Powered by standard Gemini API key
                 </p>
               </div>
 
               {error && (
-                <div className="p-3 bg-rose-950/15 border border-rose-500/20 text-rose-400 rounded-xl text-xs flex gap-2 items-start">
+                <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs flex gap-2 items-start">
                   <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
-                  <span className="font-medium text-[11px] leading-tight">{error}</span>
+                  <span className="font-semibold text-[11px] leading-tight">{error}</span>
                 </div>
               )}
             </div>
@@ -389,7 +389,7 @@ export default function VoiceCallController({
                 id="start-voice-session-btn"
                 disabled={isConnecting}
                 onClick={startVoiceSession}
-                className={`w-full py-4 bg-white hover:bg-zinc-200 active:scale-98 text-black font-semibold text-sm rounded-full shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                className={`w-full py-4 bg-gradient-to-r ${themeStyles.accent} active:scale-98 text-white font-semibold text-sm rounded-full shadow-lg shadow-pink-500/10 transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   isConnecting ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
@@ -420,18 +420,14 @@ export default function VoiceCallController({
             <header className="flex justify-between items-center z-10">
               <div className="flex items-center gap-1.5">
                 <span className="relative flex h-2 w-2">
-                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                    isAiActive ? 'bg-indigo-400' : 'bg-emerald-400'
-                  }`}></span>
-                  <span className={`relative inline-flex rounded-full h-2 w-2 ${
-                    isAiActive ? 'bg-indigo-400' : 'bg-emerald-400'
-                  }`}></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-pink-400"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-pink-500"></span>
                 </span>
-                <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-500 font-mono">
+                <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 font-mono">
                   {sessionState === 'speaking' ? 'Companion Talking' : 'Listening... speak now'}
                 </span>
               </div>
-              <div className="bg-zinc-950 border border-white/5 text-zinc-500 px-3 py-1 rounded-full text-[9px] font-mono">
+              <div className="bg-pink-50/50 border border-pink-100/40 text-pink-500 px-3 py-1 rounded-full text-[9px] font-mono">
                 Duplex Active
               </div>
             </header>
@@ -469,19 +465,19 @@ export default function VoiceCallController({
                         animate={{ scale: 1.4 + userMicLevel, opacity: 0 }}
                         exit={{ opacity: 0 }}
                         transition={{ repeat: Infinity, duration: 1.5, ease: 'easeOut' }}
-                        className="absolute h-24 w-24 rounded-full bg-zinc-800/60 filter blur"
+                        className="absolute h-24 w-24 rounded-full bg-pink-100/40 filter blur"
                       />
                     </>
                   )}
                 </AnimatePresence>
 
                 {/* Main Interactive Orb */}
-                <div className={`h-24 w-24 rounded-full flex items-center justify-center relative transition-all duration-500 ring-4 ring-white/5 ${
+                <div className={`h-24 w-24 rounded-full flex items-center justify-center relative transition-all duration-500 ring-4 ring-pink-50 ${
                   isAiActive 
                     ? `bg-gradient-to-tr ${themeStyles.accent} ${themeStyles.glow} text-white` 
                     : isUserActive 
-                      ? 'bg-zinc-100 text-black shadow-[0_0_40px_rgba(255,255,255,0.25)]' 
-                      : 'bg-zinc-950 border border-zinc-800 text-zinc-650'
+                      ? 'bg-gradient-to-tr from-rose-400 to-pink-500 text-white shadow-[0_0_30px_rgba(244,63,94,0.3)]' 
+                      : 'bg-pink-50 border border-pink-100 text-pink-400'
                 }`}>
                   <Sparkles size={24} className={`${isAiActive ? 'animate-spin-slow' : 'opacity-40'}`} />
                 </div>
@@ -489,10 +485,10 @@ export default function VoiceCallController({
 
               {/* Sub-status label */}
               <div className="text-center space-y-1">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-[#888888]">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-pink-500/70 font-semibold">
                   {isAiActive ? 'Gemini Speaking' : isUserActive ? 'You Speaking' : 'Silent'}
                 </span>
-                <p className="text-[9px] text-zinc-600 max-w-[160px] mx-auto leading-normal">
+                <p className="text-[9px] text-zinc-500 max-w-[160px] mx-auto leading-normal">
                   Speak naturally and fluent at any pacing. Gemini will respond instantly.
                 </p>
               </div>
@@ -506,8 +502,8 @@ export default function VoiceCallController({
                   onClick={() => setIsMuted(!isMuted)}
                   className={`flex-1 py-3.5 px-4 rounded-full border transition-all font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer ${
                     isMuted
-                      ? 'border-rose-500/20 bg-rose-950/10 text-rose-400 hover:bg-rose-950/20'
-                      : 'border-white/5 bg-zinc-950 text-zinc-400 hover:text-zinc-200 hover:border-white/10'
+                      ? 'border-red-200 bg-red-50 text-red-500 hover:bg-red-100/40'
+                      : 'border-pink-100 bg-[#fffbfc] text-pink-500 hover:bg-pink-50/50 hover:text-pink-600'
                   }`}
                 >
                   {isMuted ? (
@@ -527,7 +523,7 @@ export default function VoiceCallController({
                 <button
                   id="stop-voice-session-btn"
                   onClick={stopSession}
-                  className="py-3.5 px-6 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-colors shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                  className="py-3.5 px-6 rounded-full bg-rose-500 hover:bg-rose-400 text-white font-semibold text-xs transition-colors shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                   title="Hang Up Session"
                 >
                   <Square size={12} fill="currentColor" />

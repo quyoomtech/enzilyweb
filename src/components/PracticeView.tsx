@@ -3,7 +3,7 @@ import VoiceCallController from './VoiceCallController';
 
 export default function PracticeView() {
   return (
-    <div id="practice-viewport" className="flex flex-col h-full bg-[#0a0a0a] text-[#e0e0e0]">
+    <div id="practice-viewport" className="flex flex-col h-full bg-transparent text-zinc-800">
       <VoiceCallController
         mode="practice"
         title="English Fluency Practice"

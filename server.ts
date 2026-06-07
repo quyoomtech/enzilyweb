@@ -195,6 +195,7 @@ Provide response in JSON format.`;
       const host = request.headers.host || "localhost";
       const url = new URL(request.url || "", `http://${host}`);
       const mode = url.searchParams.get("mode") || "practice";
+      const voiceName = url.searchParams.get("voice") || "Nova";
       const model = "gemini-3.1-flash-live-preview";
 
       let systemInstruction = "";
@@ -250,7 +251,7 @@ You should defend the opposite side of whatever stance the User takes. Keep your
           speechConfig: {
             voiceConfig: {
               prebuiltVoiceConfig: {
-                voiceName: "Aoede"
+                voiceName: voiceName
               }
             }
           },

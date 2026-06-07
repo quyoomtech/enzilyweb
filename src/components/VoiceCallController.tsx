@@ -1,6 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Mic, MicOff, Volume2, VolumeX, Sparkles, HelpCircle, AlertCircle, Play, Square, Loader2 } from 'lucide-react';
+import { Mic, MicOff, Volume2, VolumeX, Sparkles, HelpCircle, AlertCircle, Play, Square, Loader2, ChevronDown, Check } from 'lucide-react';
+
+const SUPPORTED_VOICES = [
+  { id: 'Nova', name: 'Nova', description: 'Calm and mid-range', gender: 'female' },
+  { id: 'Ursa', name: 'Ursa', description: 'Engaged and mid-range', gender: 'female' },
+  { id: 'Vega', name: 'Vega', description: 'Bright and higher-pitched', gender: 'female' },
+  { id: 'Lyra', name: 'Lyra', description: 'Bright and higher-pitched (Alt)', gender: 'female' },
+  { id: 'Capella', name: 'Capella', description: 'British accent, higher-pitched', gender: 'female' },
+  { id: 'Eclipse', name: 'Eclipse', description: 'Energetic and mid-range', gender: 'female' },
+  { id: 'Pegasus', name: 'Pegasus', description: 'Engaged and deeper', gender: 'male' },
+  { id: 'Orbit', name: 'Orbit', description: 'Energetic and deeper', gender: 'male' },
+  { id: 'Orion', name: 'Orion', description: 'Bright and deeper (Alt)', gender: 'male' },
+  { id: 'Dipper', name: 'Dipper', description: 'Engaged and deeper (Alt 2)', gender: 'male' }
+];
 
 export interface VoiceCallControllerProps {
   mode: 'translator' | 'practice' | 'debate';
@@ -19,6 +32,10 @@ export default function VoiceCallController({
 }: VoiceCallControllerProps) {
   const [isStarted, setIsStarted] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState<string>(() => {
+    return localStorage.getItem('prebuilt_voice_selection') || 'Nova';
+  });
+  const [isDropdownActive, setIsDropdownActive] = useState(false);
   const [sessionState, setSessionState] = useState<'idle' | 'listening' | 'speaking' | 'thinking'>('idle');
   const [isMuted, setIsMuted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +55,79 @@ export default function VoiceCallController({
   const socketRef = useRef<WebSocket | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
 
+  // Play a beautiful, futuristic ascending dual-tone digital chime on secure connection
+  const playStartSound = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+      
+      // Tone 1: Pinkish soft sine
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(523.25, now); // C5
+      osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.15); // G5
+      osc1.frequency.exponentialRampToValueAtTime(1046.50, now + 0.3); // C6
+      
+      gain1.gain.setValueAtTime(0.0, now);
+      gain1.gain.linearRampToValueAtTime(0.12, now + 0.05);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      
+      // Tone 2: Warm ambient triangle base-note
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(261.63, now); // C4
+      
+      gain2.gain.setValueAtTime(0.0, now);
+      gain2.gain.linearRampToValueAtTime(0.08, now + 0.05);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+      
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      
+      osc1.start(now);
+      osc2.start(now);
+      
+      osc1.stop(now + 0.45);
+      osc2.stop(now + 0.55);
+    } catch (e) {
+      console.warn("Could not play start chime:", e);
+    }
+  };
+
+  // Play a descending tender digital bell/chime on stop
+  const playStopSound = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+      
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(880.00, now); // A5
+      osc1.frequency.exponentialRampToValueAtTime(587.33, now + 0.12); // D5
+      osc1.frequency.exponentialRampToValueAtTime(440.00, now + 0.25); // A4
+      
+      gain1.gain.setValueAtTime(0.0, now);
+      gain1.gain.linearRampToValueAtTime(0.1, now + 0.04);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      
+      osc1.start(now);
+      osc1.stop(now + 0.4);
+    } catch (e) {
+      console.warn("Could not play stop chime:", e);
+    }
+  };
+
   // Start Voice Calling Session using Default Voice & Model
   const startVoiceSession = async () => {
     setIsConnecting(true);
@@ -56,7 +146,7 @@ export default function VoiceCallController({
 
       // 3. Connect to the WebSocket endpoint on our full-stack server
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/api/live-ws?mode=${mode}`;
+      const wsUrl = `${protocol}//${window.location.host}/api/live-ws?mode=${mode}&voice=${selectedVoice}`;
       
       const ws = new WebSocket(wsUrl);
       socketRef.current = ws;
@@ -65,6 +155,7 @@ export default function VoiceCallController({
         setIsStarted(true);
         setIsConnecting(false);
         setSessionState('listening');
+        playStartSound();
       };
 
       ws.onmessage = (event) => {
@@ -91,7 +182,7 @@ export default function VoiceCallController({
       };
 
       ws.onclose = () => {
-        stopSession();
+        stopSession(true);
       };
 
       ws.onerror = () => {
@@ -247,7 +338,9 @@ export default function VoiceCallController({
     setIsAiActive(false);
   };
 
-  const stopSession = () => {
+  const stopSession = (playChime = false) => {
+    const wasStarted = isStarted;
+
     if (animationFrameIdRef.current) {
       cancelAnimationFrame(animationFrameIdRef.current);
       animationFrameIdRef.current = null;
@@ -294,6 +387,10 @@ export default function VoiceCallController({
     setUserMicLevel(0);
     setIsUserActive(false);
     setIsAiActive(false);
+
+    if (playChime && wasStarted) {
+      playStopSound();
+    }
   };
 
   useEffect(() => {
@@ -301,6 +398,19 @@ export default function VoiceCallController({
       stopSession();
     };
   }, []);
+
+  // Trigger automatic hot-reconnection when selected voice changes during an active call
+  const initialVoiceMountRef = useRef(true);
+  useEffect(() => {
+    if (initialVoiceMountRef.current) {
+      initialVoiceMountRef.current = false;
+      return;
+    }
+    if (isStarted) {
+      console.log(`[VoiceCallController] Voice changed to ${selectedVoice} during live session. Automatically reconnecting...`);
+      startVoiceSession();
+    }
+  }, [selectedVoice]);
 
   // Theme Styling Configuration
   const themeStyles = {
@@ -381,6 +491,82 @@ export default function VoiceCallController({
                   <span className="font-semibold text-[11px] leading-tight">{error}</span>
                 </div>
               )}
+
+              {/* COMPANION VOICE SELECTION */}
+              <div className="space-y-2 relative z-30">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#a1a1aa] font-bold block">
+                  ✨ Companion Voice
+                </span>
+                
+                <div className="relative">
+                  {/* Select Trigger */}
+                  <button
+                    type="button"
+                    onClick={() => setIsDropdownActive(!isDropdownActive)}
+                    className="w-full flex items-center justify-between text-left text-xs bg-white border border-pink-100/70 hover:border-pink-200/90 p-3.5 rounded-xl outline-none text-zinc-800 transition-all cursor-pointer shadow-[0_2px_8px_rgba(236,72,153,0.02)]"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" />
+                      <div>
+                        <span className="font-semibold text-zinc-900">
+                          {selectedVoice}
+                        </span>
+                        <span className="ml-2 text-[10px] bg-pink-50 text-pink-600 px-1.5 py-0.5 rounded-full font-medium">
+                          {SUPPORTED_VOICES.find(v => v.id === selectedVoice)?.gender === 'female' ? 'Female' : 'Male'}
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronDown size={14} className={`text-zinc-400 transition-transform duration-200 ${isDropdownActive ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Options List */}
+                  <AnimatePresence>
+                    {isDropdownActive && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setIsDropdownActive(false)} />
+                        <motion.div
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 5 }}
+                          transition={{ duration: 0.12 }}
+                          className="absolute left-0 right-0 mt-1.5 max-h-[180px] overflow-y-auto bg-white border border-pink-100/70 rounded-xl shadow-[0_12px_24px_rgba(236,72,153,0.08)] z-50 p-1 scrollbar-thin"
+                        >
+                          {SUPPORTED_VOICES.map((v) => {
+                            const isSelected = v.id === selectedVoice;
+                            return (
+                              <button
+                                key={v.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedVoice(v.id);
+                                  localStorage.setItem('prebuilt_voice_selection', v.id);
+                                  setIsDropdownActive(false);
+                                }}
+                                className={`w-full flex items-center justify-between text-left px-3 py-2.5 rounded-lg text-xs transition-colors cursor-pointer ${
+                                  isSelected 
+                                    ? 'bg-pink-50/70 text-pink-600 font-semibold' 
+                                    : 'hover:bg-zinc-50 text-zinc-700'
+                                }`}
+                              >
+                                <div>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-medium text-[12px]">{v.name}</span>
+                                    <span className={`text-[8px] px-1 rounded-sm ${v.gender === 'female' ? 'bg-pink-100/40 text-pink-600' : 'bg-blue-50 text-blue-500'}`}>
+                                      {v.gender === 'female' ? 'Female' : 'Male'}
+                                    </span>
+                                  </div>
+                                  <p className="text-[10px] text-zinc-400 font-normal leading-tight mt-0.5">{v.description}</p>
+                                </div>
+                                {isSelected && <Check size={12} className="text-pink-500" />}
+                              </button>
+                            );
+                          })}
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
             </div>
 
             {/* HIGH-CONTRAST START BUTTON ONLY */}
@@ -427,8 +613,9 @@ export default function VoiceCallController({
                   {sessionState === 'speaking' ? 'Companion Talking' : 'Listening... speak now'}
                 </span>
               </div>
-              <div className="bg-pink-50/50 border border-pink-100/40 text-pink-500 px-3 py-1 rounded-full text-[9px] font-mono">
-                Duplex Active
+              <div className="bg-pink-50/50 border border-pink-100/40 text-pink-500 px-2.5 py-1 rounded-full text-[9px] font-mono flex items-center gap-1">
+                <Volume2 size={10} />
+                <span>{selectedVoice}</span>
               </div>
             </header>
 
@@ -522,7 +709,7 @@ export default function VoiceCallController({
                 {/* HIGH-CONTRAST STOP BUTTON ONLY */}
                 <button
                   id="stop-voice-session-btn"
-                  onClick={stopSession}
+                  onClick={() => stopSession(true)}
                   className="py-3.5 px-6 rounded-full bg-rose-500 hover:bg-rose-400 text-white font-semibold text-xs transition-colors shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                   title="Hang Up Session"
                 >

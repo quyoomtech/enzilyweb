@@ -1,0 +1,6 @@
+{
+  "name": "Enzily AI English Tutor",
+  "description": "An interactive AI English learning platform with translator, pronunciation practice, and debate simulation powered by Gemini API.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

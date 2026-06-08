@@ -46,8 +46,12 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // Check backend server status to warn user if Gemini key is missing in .env
+  // Check backend server status to warn user if Gemini key is missing in environment variables
   useEffect(() => {
+    if ((import.meta as any).env?.VITE_GEMINI_API_KEY) {
+      setHasApiKey(true);
+      return;
+    }
     fetch('/api/status')
       .then(res => res.json())
       .then((data) => {
@@ -56,7 +60,8 @@ export default function App() {
         }
       })
       .catch(() => {
-        // Fallback
+        // If server status is unavailable, we might be running in a standard static/Vercel SPA env
+        setHasApiKey(false);
       });
   }, []);
 
@@ -163,7 +168,7 @@ export default function App() {
         {/* Read-only Alert Warning Banner when API Key is missing */}
         {!hasApiKey && (
           <div className="bg-rose-50 border-t border-rose-100 text-rose-600 text-[10px] py-1.5 px-4 text-center tracking-normal font-medium font-sans">
-            Please configure GEMINI_API_KEY in Settings &gt; Secrets to enable AI functionality.
+            Please configure GEMINI_API_KEY / VITE_GEMINI_API_KEY to enable AI functionality in this deployment.
           </div>
         )}
       </div>

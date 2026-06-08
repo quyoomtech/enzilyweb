@@ -353,7 +353,7 @@ export default function VoiceCallController({
         
         console.warn("[VoiceCallController] Server duplex proxy socket errored/closed. Attempting direct fallback to Google Gemini Live API...");
         
-        let apiKey = serverConfig.apiKey;
+        let apiKey = serverConfig.apiKey || ((import.meta as any).env?.VITE_GEMINI_API_KEY as string);
         if (!apiKey) {
           try {
             const res = await fetch('/api/live-config');
@@ -369,7 +369,7 @@ export default function VoiceCallController({
         if (apiKey) {
           startDirectSession(apiKey, stream, audioCtx);
         } else {
-          setError('Failed to establish a duplex connection with Gemini (Vercel deployment detected, but GEMINI_API_KEY is not configured in Vercel settings).');
+          setError('Failed to establish a duplex connection with Gemini. Please configure GEMINI_API_KEY or VITE_GEMINI_API_KEY in your Vercel or environment settings.');
           stopSession();
         }
       };

@@ -71,6 +71,7 @@ export default function VoiceCallController({
   const socketRef = useRef<WebSocket | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
   const isDirectRef = useRef<boolean>(false);
+  const isSessionStartedRef = useRef<boolean>(false);
 
   // Play a beautiful, futuristic ascending dual-tone digital chime on secure connection
   const playStartSound = () => {
@@ -224,7 +225,7 @@ export default function VoiceCallController({
     processor.connect(audioCtx.destination);
   };
 
-  // Connect directly from client/browser to Google's public Gemini Multimodal API (Vercel WebSocket Fallback)
+  // Connect directly from client/browser to Google's public Gemini Multimodal API (Vercel/Cloudflare WebSocket Fallback)
   const startDirectSession = (apiKey: string, stream: MediaStream, audioCtx: AudioContext) => {
     try {
       isDirectRef.current = true;
@@ -235,6 +236,7 @@ export default function VoiceCallController({
 
       ws.onopen = () => {
         setIsStarted(true);
+        isSessionStartedRef.current = true;
         setIsConnecting(false);
         setSessionState('listening');
         playStartSound();
@@ -290,13 +292,17 @@ export default function VoiceCallController({
         }
       };
 
-      ws.onclose = () => {
+      ws.onclose = (event) => {
+        console.log('[DirectWS] Closed with code:', event.code, 'reason:', event.reason);
+        if (event.code !== 1000 && event.code !== 1005) {
+          setError(`Direct Gemini Live connection closed (Code ${event.code}). Please verify your GEMINI_API_KEY is correct, active, and has access to the Multimodal Live API. Reason: ${event.reason || 'Authentication failed or API key not valid.'}`);
+        }
         stopSession(true);
       };
 
       ws.onerror = (e) => {
         console.error('[DirectWS] connection error:', e);
-        setError('Failed to establish direct duplex connection with Gemini. Please try again.');
+        setError('Failed to establish a direct connection to the Gemini Live API host. Check your connection or API key settings.');
         stopSession();
       };
 
@@ -379,6 +385,7 @@ export default function VoiceCallController({
 
       ws.onopen = () => {
         setIsStarted(true);
+        isSessionStartedRef.current = true;
         setIsConnecting(false);
         setSessionState('listening');
         playStartSound();
@@ -408,7 +415,7 @@ export default function VoiceCallController({
       };
 
       ws.onclose = () => {
-        if (!isStarted) {
+        if (!isSessionStartedRef.current) {
           triggerDirectFallback();
         } else {
           stopSession(true);
@@ -556,6 +563,7 @@ export default function VoiceCallController({
     }
 
     setIsStarted(false);
+    isSessionStartedRef.current = false;
     setSessionState('idle');
     setIsConnecting(false);
     setUserMicLevel(0);

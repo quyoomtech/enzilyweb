@@ -353,7 +353,10 @@ export default function VoiceCallController({
         
         console.warn("[VoiceCallController] Server duplex proxy socket errored/closed. Attempting direct fallback to Google Gemini Live API...");
         
-        let apiKey = serverConfig.apiKey || ((import.meta as any).env?.VITE_GEMINI_API_KEY as string);
+        let apiKey = serverConfig.apiKey || 
+                     process.env.GEMINI_API_KEY || 
+                     process.env.VITE_GEMINI_API_KEY || 
+                     ((import.meta as any).env?.VITE_GEMINI_API_KEY as string);
         if (!apiKey) {
           try {
             const res = await fetch('/api/live-config');

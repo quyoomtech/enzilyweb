@@ -48,6 +48,11 @@ export default function App() {
 
   // Check backend server status to warn user if Gemini key is missing in environment variables
   useEffect(() => {
+    const buildKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+    if (buildKey) {
+      setHasApiKey(true);
+      return;
+    }
     if ((import.meta as any).env?.VITE_GEMINI_API_KEY) {
       setHasApiKey(true);
       return;
@@ -55,7 +60,9 @@ export default function App() {
     fetch('/api/status')
       .then(res => res.json())
       .then((data) => {
-        if (data && !data.hasKey) {
+        if (data && data.hasKey) {
+          setHasApiKey(true);
+        } else {
           setHasApiKey(false);
         }
       })

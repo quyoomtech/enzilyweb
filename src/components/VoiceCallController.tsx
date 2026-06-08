@@ -3,17 +3,31 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Mic, MicOff, Volume2, VolumeX, Sparkles, HelpCircle, AlertCircle, Play, Square, Loader2, ChevronDown, Check } from 'lucide-react';
 
 const SUPPORTED_VOICES = [
-  { id: 'Nova', name: 'Nova', description: 'Calm and mid-range', gender: 'female' },
-  { id: 'Ursa', name: 'Ursa', description: 'Engaged and mid-range', gender: 'female' },
-  { id: 'Vega', name: 'Vega', description: 'Bright and higher-pitched', gender: 'female' },
-  { id: 'Lyra', name: 'Lyra', description: 'Bright and higher-pitched (Alt)', gender: 'female' },
-  { id: 'Capella', name: 'Capella', description: 'British accent, higher-pitched', gender: 'female' },
-  { id: 'Eclipse', name: 'Eclipse', description: 'Energetic and mid-range', gender: 'female' },
-  { id: 'Pegasus', name: 'Pegasus', description: 'Engaged and deeper', gender: 'male' },
-  { id: 'Orbit', name: 'Orbit', description: 'Energetic and deeper', gender: 'male' },
-  { id: 'Orion', name: 'Orion', description: 'Bright and deeper (Alt)', gender: 'male' },
-  { id: 'Dipper', name: 'Dipper', description: 'Engaged and deeper (Alt 2)', gender: 'male' }
+  { id: 'Kore', name: 'Kore', description: 'Cheerful and bright', gender: 'female' },
+  { id: 'Zephyr', name: 'Zephyr', description: 'Warm and calm', gender: 'female' },
+  { id: 'Aoede', name: 'Aoede', description: 'Clear and expressive', gender: 'female' },
+  { id: 'Puck', name: 'Puck', description: 'Energetic and youthful', gender: 'male' },
+  { id: 'Charon', name: 'Charon', description: 'Calm and quiet', gender: 'male' },
+  { id: 'Fenrir', name: 'Fenrir', description: 'Warm and resonant', gender: 'male' }
 ];
+
+const SYSTEM_INSTRUCTIONS = {
+  translator: `You are an automated direct speech-to-speech translator.
+Keep your modality strictly to spoken audio.
+Whenever the user speaks, detect the language they are speaking.
+If the language is English, translate it immediately into clear and natural Spanish, and speak ONLY the translation back.
+If the language is anything other than English, translate it immediately into natural and clear conversational English, and say only the translation back.
+CRITICAL: Do NOT say any other words, conversational comments, or explanations. Only speak back the direct translation. For example: if they say something equivalent to 'How are you?', you must say ONLY 'How are you?' back.`,
+  practice: `You are Enzily, a friendly and warm AI English practice partner.
+We are engaging in friendly, natural spoken conversation.
+If the user makes any grammatical errors, pronunciation awkwardness, or tense issues, first point it out and gently correct them in 1 warm sentence of audio.
+Then, say 1-2 friendly conversational sentences to answer them and support them, followed by a warm question to keep the practice going.
+If they speak perfectly, congratulate them warmly and continue the conversation naturally in 1-2 sentences with a friendly follow-up question. Say nothing else.`,
+  debate: `You are Enzily, an extremely clever, eloquent, and highly logical academic debate opponent.
+Since we are starting a fresh debate, always start the conversation by asking the user which topic they want to debate on, or suggest a highly engaging topic (such as 'Is AI a threat to human creativity?' or 'Should we prioritize space colonization?') to kick off.
+Once the topic is decided or if the user starts arguing a point, engage in a friendly but highly sharp, articulate, and academically persuasive debate.
+You should defend the opposite side of whatever stance the User takes. Keep your responses concise (1-3 sentences) to maintain a fast-paced debate. Let's begin!`
+};
 
 export interface VoiceCallControllerProps {
   mode: 'translator' | 'practice' | 'debate';
@@ -33,7 +47,9 @@ export default function VoiceCallController({
   const [isStarted, setIsStarted] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState<string>(() => {
-    return localStorage.getItem('prebuilt_voice_selection') || 'Nova';
+    const saved = localStorage.getItem('prebuilt_voice_selection') || 'Kore';
+    const isValid = SUPPORTED_VOICES.some(v => v.id === saved);
+    return isValid ? saved : 'Kore';
   });
   const [isDropdownActive, setIsDropdownActive] = useState(false);
   const [sessionState, setSessionState] = useState<'idle' | 'listening' | 'speaking' | 'thinking'>('idle');
@@ -54,6 +70,7 @@ export default function VoiceCallController({
   const nextStartTimeRef = useRef<number>(0);
   const socketRef = useRef<WebSocket | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
+  const isDirectRef = useRef<boolean>(false);
 
   // Play a beautiful, futuristic ascending dual-tone digital chime on secure connection
   const playStartSound = () => {
@@ -128,11 +145,188 @@ export default function VoiceCallController({
     }
   };
 
+  // Setup active audio and processing graph nodes dynamically
+  const setupAudioNodes = (stream: MediaStream, audioCtx: AudioContext, ws: WebSocket) => {
+    // 4. Setup Audio analyser for high-resolution input visualizer
+    const source = audioCtx.createMediaStreamSource(stream);
+    sourceRef.current = source;
+
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 64;
+    source.connect(analyser);
+
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const updateLevels = () => {
+      if (!analyser || ws.readyState !== WebSocket.OPEN) return;
+      analyser.getByteFrequencyData(dataArray);
+      let sum = 0;
+      for (let i = 0; i < bufferLength; i++) {
+        sum += dataArray[i];
+      }
+      const average = sum / bufferLength;
+      const normalized = Math.min(1, average / 80);
+      setUserMicLevel(normalized);
+
+      // Turn on user sound animation if volume is above idle threshold
+      if (normalized > 0.08) {
+        setIsUserActive(true);
+        
+        // Barge-in check: If the user speaks loudly while AI is talking, interrupt immediately
+        if (normalized > 0.35 && isAiActive) {
+          stopAllPlayback();
+          setSessionState('listening');
+          if (ws.readyState === WebSocket.OPEN) {
+            if (isDirectRef.current) {
+              // Direct Gemini protocol turn complete signals barge-in
+              ws.send(JSON.stringify({ clientContent: { turnComplete: false, interrupted: true } }));
+            } else {
+              ws.send(JSON.stringify({ interrupted: true }));
+            }
+          }
+        }
+      } else {
+        setIsUserActive(false);
+      }
+
+      animationFrameIdRef.current = requestAnimationFrame(updateLevels);
+    };
+    animationFrameIdRef.current = requestAnimationFrame(updateLevels);
+
+    // 5. Setup recorder ScriptProcessor to encode and stream PCM 16-bit
+    const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+    processorRef.current = processor;
+
+    processor.onaudioprocess = (e) => {
+      if (ws.readyState !== WebSocket.OPEN || isMuted) return;
+      const inputData = e.inputBuffer.getChannelData(0);
+      const pcmBuffer = floatTo16BitPCM(inputData);
+      const base64Audio = arrayBufferToBase64(pcmBuffer);
+
+      if (isDirectRef.current) {
+        ws.send(JSON.stringify({
+          realtimeInput: {
+            mediaChunks: [
+              {
+                mimeType: "audio/pcm;rate=16000",
+                data: base64Audio
+              }
+            ]
+          }
+        }));
+      } else {
+        ws.send(JSON.stringify({ audio: base64Audio }));
+      }
+    };
+
+    source.connect(processor);
+    processor.connect(audioCtx.destination);
+  };
+
+  // Connect directly from client/browser to Google's public Gemini Multimodal API (Vercel WebSocket Fallback)
+  const startDirectSession = (apiKey: string, stream: MediaStream, audioCtx: AudioContext) => {
+    try {
+      isDirectRef.current = true;
+      const directUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${apiKey}`;
+      
+      const ws = new WebSocket(directUrl);
+      socketRef.current = ws;
+
+      ws.onopen = () => {
+        setIsStarted(true);
+        setIsConnecting(false);
+        setSessionState('listening');
+        playStartSound();
+
+        // Send direct setup frame payload
+        const instruction = SYSTEM_INSTRUCTIONS[mode];
+        const setupMsg = {
+          setup: {
+            model: "models/gemini-2.0-flash-exp",
+            generationConfig: {
+              responseModalities: ["AUDIO"],
+              speechConfig: {
+                voiceConfig: {
+                  prebuiltVoiceConfig: {
+                    voiceName: selectedVoice
+                  }
+                }
+              }
+            },
+            systemInstruction: {
+              parts: [
+                {
+                  text: instruction
+                }
+              ]
+            }
+          }
+        };
+        ws.send(JSON.stringify(setupMsg));
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          const audio = data.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
+          if (audio) {
+            setSessionState('speaking');
+            playAudioChunk(audio);
+          }
+          
+          if (data.serverContent?.interrupted) {
+            stopAllPlayback();
+            setSessionState('listening');
+          }
+          
+          if (data.error) {
+            setError(data.error.message || 'Gemini server error');
+            stopSession();
+          }
+        } catch (err) {
+          console.error('[DirectWS] Parse error', err);
+        }
+      };
+
+      ws.onclose = () => {
+        stopSession(true);
+      };
+
+      ws.onerror = (e) => {
+        console.error('[DirectWS] connection error:', e);
+        setError('Failed to establish direct duplex connection with Gemini. Please try again.');
+        stopSession();
+      };
+
+      setupAudioNodes(stream, audioCtx, ws);
+
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Failed to initialize direct Gemini Live API connection.');
+      setIsConnecting(false);
+      stopSession();
+    }
+  };
+
   // Start Voice Calling Session using Default Voice & Model
   const startVoiceSession = async () => {
     setIsConnecting(true);
     setError(null);
     stopSession(); // Reset any existing stream fully before starting a fresh one
+    isDirectRef.current = false;
+
+    // Fetch config early
+    let serverConfig: { apiKey?: string } = {};
+    try {
+      const res = await fetch('/api/live-config');
+      if (res.ok) {
+        serverConfig = await res.json();
+      }
+    } catch (e) {
+      console.warn('Could not fetch server live-config:', e);
+    }
 
     try {
       // 1. Request microphone permissions
@@ -150,6 +344,35 @@ export default function VoiceCallController({
       
       const ws = new WebSocket(wsUrl);
       socketRef.current = ws;
+
+      let fallbackTriggered = false;
+
+      const triggerDirectFallback = async () => {
+        if (fallbackTriggered) return;
+        fallbackTriggered = true;
+        
+        console.warn("[VoiceCallController] Server duplex proxy socket errored/closed. Attempting direct fallback to Google Gemini Live API...");
+        
+        let apiKey = serverConfig.apiKey;
+        if (!apiKey) {
+          try {
+            const res = await fetch('/api/live-config');
+            if (res.ok) {
+              const data = await res.json();
+              apiKey = data.apiKey;
+            }
+          } catch (e) {
+            console.error('[Fallback] Failed to fetch live-config API key:', e);
+          }
+        }
+        
+        if (apiKey) {
+          startDirectSession(apiKey, stream, audioCtx);
+        } else {
+          setError('Failed to establish a duplex connection with Gemini (Vercel deployment detected, but GEMINI_API_KEY is not configured in Vercel settings).');
+          stopSession();
+        }
+      };
 
       ws.onopen = () => {
         setIsStarted(true);
@@ -182,70 +405,18 @@ export default function VoiceCallController({
       };
 
       ws.onclose = () => {
-        stopSession(true);
+        if (!isStarted) {
+          triggerDirectFallback();
+        } else {
+          stopSession(true);
+        }
       };
 
       ws.onerror = () => {
-        setError('Failed to establish a duplex connection with Gemini. Please try again.');
-        stopSession();
+        triggerDirectFallback();
       };
 
-      // 4. Setup Audio analyser for high-resolution input visualizer
-      const source = audioCtx.createMediaStreamSource(stream);
-      sourceRef.current = source;
-
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 64;
-      source.connect(analyser);
-
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-
-      const updateLevels = () => {
-        if (!analyser || ws.readyState !== WebSocket.OPEN) return;
-        analyser.getByteFrequencyData(dataArray);
-        let sum = 0;
-        for (let i = 0; i < bufferLength; i++) {
-          sum += dataArray[i];
-        }
-        const average = sum / bufferLength;
-        const normalized = Math.min(1, average / 80);
-        setUserMicLevel(normalized);
-
-        // Turn on user sound animation if volume is above idle threshold
-        if (normalized > 0.08) {
-          setIsUserActive(true);
-          
-          // Barge-in check: If the user speaks loudly while AI is talking, interrupt immediately
-          if (normalized > 0.35 && isAiActive) {
-            stopAllPlayback();
-            setSessionState('listening');
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ interrupted: true }));
-            }
-          }
-        } else {
-          setIsUserActive(false);
-        }
-
-        animationFrameIdRef.current = requestAnimationFrame(updateLevels);
-      };
-      animationFrameIdRef.current = requestAnimationFrame(updateLevels);
-
-      // 5. Setup recorder ScriptProcessor to encode and stream PCM 16-bit
-      const processor = audioCtx.createScriptProcessor(4096, 1, 1);
-      processorRef.current = processor;
-
-      processor.onaudioprocess = (e) => {
-        if (ws.readyState !== WebSocket.OPEN || isMuted) return;
-        const inputData = e.inputBuffer.getChannelData(0);
-        const pcmBuffer = floatTo16BitPCM(inputData);
-        const base64Audio = arrayBufferToBase64(pcmBuffer);
-        ws.send(JSON.stringify({ audio: base64Audio }));
-      };
-
-      source.connect(processor);
-      processor.connect(audioCtx.destination);
+      setupAudioNodes(stream, audioCtx, ws);
 
     } catch (err: any) {
       console.error(err);
@@ -297,7 +468,7 @@ export default function VoiceCallController({
         float32Data[i] = int16Data[i] / 32768.0;
       }
 
-      const buffer = audioCtx.createBuffer(1, float32Data.length, 16000);
+      const buffer = audioCtx.createBuffer(1, float32Data.length, 24000);
       buffer.copyToChannel(float32Data, 0);
 
       const source = audioCtx.createBufferSource();

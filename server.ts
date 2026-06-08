@@ -52,6 +52,13 @@ async function startServer() {
     });
   });
 
+  // Provide server environment key to client for WebSocket fallback (essential for Vercel)
+  app.get("/api/live-config", (req, res) => {
+    res.json({
+      apiKey: process.env.GEMINI_API_KEY || ""
+    });
+  });
+
   // 1. Translator Endpoint
   app.post("/api/translate-converse", async (req, res) => {
     try {
@@ -195,7 +202,7 @@ Provide response in JSON format.`;
       const host = request.headers.host || "localhost";
       const url = new URL(request.url || "", `http://${host}`);
       const mode = url.searchParams.get("mode") || "practice";
-      const voiceName = url.searchParams.get("voice") || "Nova";
+      const voiceName = url.searchParams.get("voice") || "Kore";
       const model = "gemini-3.1-flash-live-preview";
 
       let systemInstruction = "";

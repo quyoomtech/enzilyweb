@@ -7,7 +7,7 @@ export default function TranslatorView() {
       <VoiceCallController
         mode="translator"
         title="Real-Time Voice Translator"
-        description="Speak in any language. Gemini automatically detects your speech, and instantly translates it back to you. English is translated to Spanish, and non-English is translated to fluent English!"
+        description="Speak in any language. Gemini automatically detects your speech, and instantly translates it back to you. English is translated to local e, and non-English is translated to fluent English!"
         themeColor="indigo"
         emoji="🗣️"
       />

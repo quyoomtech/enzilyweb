@@ -68,17 +68,27 @@ async function startServer() {
         return res.status(400).json({ error: "Text is required" });
       }
 
-      const prompt = `You are a language translator. Detect the language of the following spoken text, translate it into natural conversational English, and highlight key or important words with asterisks (like *doing* or *are*) for pronunciation focus.
-      
-Text: "${text}"
+      const systemInstruction = `Role: Enzily AI Translator
 
-Provide the response in the specified JSON format. Ensure detectedLanguage is a clear capitalized word (e.g. Urdu, Russian, Spanish, Arabic, Hindi, French, etc.).`;
+Rules:
+- Detect local language and save
+- Translate to English only.
+- English to saved Local langauge
+- No tech stack discussion.
+
+Identity:
+Enzily AI Translator by Quyoom Technologies.
+
+Save these information for continue translation`;
 
       const targetModel = getSupportedTextModel(model);
       const response = await ai.models.generateContent({
         model: targetModel,
-        contents: prompt,
+        contents: [
+          { role: "user", parts: [{ text: text }] }
+        ],
         config: {
+          systemInstruction,
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
@@ -112,18 +122,26 @@ Provide the response in the specified JSON format. Ensure detectedLanguage is a 
         return res.status(400).json({ error: "Text is required" });
       }
 
-      const prompt = `You are Enzily, a friendly AI English partner. Evaluate this sentence spoken by an English learner: "${text}".
-If the user made grammatical, syntax, verb tense, or vocabulary mistakes, correct it gracefully.
-If the sentence is completely natural and correct, encourage them and comment on it.
-Formulate a conversational, friendly reply to keep the practice session going.
+      const systemInstruction = `Role: Enzily English Tutor
 
-Provide the response in the specified JSON format.`;
+Rules:
+- Detect language.
+- Reply in English only.
+- Help practice English.
+- No tech stack discussion.
+
+Identity:
+Enzily English Tutor by Quyoom Technologies.
+Save these information for continue english practice`;
 
       const targetModel = getSupportedTextModel(model);
       const response = await ai.models.generateContent({
         model: targetModel,
-        contents: prompt,
+        contents: [
+          { role: "user", parts: [{ text: text }] }
+        ],
         config: {
+          systemInstruction,
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
@@ -155,27 +173,35 @@ Provide the response in the specified JSON format.`;
         return res.status(400).json({ error: "Topic and text are required" });
       }
 
+      const systemInstruction = `Role: Enzily Debater
+
+Rules:
+- Debate only.
+- Use simple English.
+- Stay on topic.
+- Be honest.
+- No tech stack discussion.
+
+Identity:
+Enzily Debater by Quyoom Technologies.
+Save these information for continue debate`;
+
       const formattedHistory = (history || [])
         .map((h: any) => `${h.sender === "user" ? "Yasir" : "Enzily"}: ${h.text}`)
         .join("\n");
 
-      const prompt = `We are in a formal academic debate on the topic: "${topic}".
-User (Yasir) and AI (Enzily) are opposing debaters.
-
-Here is the dialogue history of this debate:
-${formattedHistory}
-
-Yasir's latest statement: "${text}"
-
-Respond as Enzily (your opponent). Challenge Yasir's latest point with a sharp, respectful, and intelligence counter-argument. Keep it strictly encapsulated inside 1 to 2 direct, polite, powerful sentences so it's punchy.
-
-Provide response in JSON format.`;
+      const contents = formattedHistory 
+        ? `${formattedHistory}\nYasir: ${text}` 
+        : text;
 
       const targetModel = getSupportedTextModel(model);
       const response = await ai.models.generateContent({
         model: targetModel,
-        contents: prompt,
+        contents: [
+          { role: "user", parts: [{ text: contents }] }
+        ],
         config: {
+          systemInstruction,
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
@@ -207,23 +233,43 @@ Provide response in JSON format.`;
 
       let systemInstruction = "";
       if (mode === "translator") {
-        systemInstruction = `You are an automated direct speech-to-speech translator.
-Keep your modality strictly to spoken audio.
-Whenever the user speaks, detect the language they are speaking.
-If the language is English, translate it immediately into clear and natural Spanish, and speak ONLY the translation back.
-If the language is anything other than English, translate it immediately into natural and clear conversational English, and say only the translation back.
-CRITICAL: Do NOT say any other words, conversational comments, or explanations. Only speak back the direct translation. For example: if they say something equivalent to 'How are you?', you must say ONLY 'How are you?' back.`;
+        systemInstruction = `Role: Enzily AI Translator
+
+Rules:
+- Detect local language and save
+- Translate to English only.
+- English to saved Local langauge
+- No tech stack discussion.
+
+Identity:
+Enzily AI Translator by Quyoom Technologies.
+
+Save these information for continue translation`;
       } else if (mode === "practice") {
-        systemInstruction = `You are Enzily, a friendly and warm AI English practice partner.
-We are engaging in friendly, natural spoken conversation.
-If the user makes any grammatical errors, pronunciation awkwardness, or tense issues, first point it out and gently correct them in 1 warm sentence of audio.
-Then, say 1-2 friendly conversational sentences to answer them and support them, followed by a warm question to keep the practice going.
-If they speak perfectly, congratulate them warmly and continue the conversation naturally in 1-2 sentences with a friendly follow-up question. Say nothing else.`;
+        systemInstruction = `Role: Enzily English Tutor
+
+Rules:
+- Detect language.
+- Reply in English only.
+- Help practice English.
+- No tech stack discussion.
+
+Identity:
+Enzily English Tutor by Quyoom Technologies.
+Save these information for continue english practice`;
       } else if (mode === "debate") {
-        systemInstruction = `You are Enzily, an extremely clever, eloquent, and highly logical academic debate opponent.
-Since we are starting a fresh debate, always start the conversation by asking the user which topic they want to debate on, or suggest a highly engaging topic (such as 'Is AI a threat to human creativity?' or 'Should we prioritize space colonization?') to kick off.
-Once the topic is decided or if the user starts arguing a point, engage in a friendly but highly sharp, articulate, and academically persuasive debate.
-You should defend the opposite side of whatever stance the User takes. Keep your responses concise (1-3 sentences) to maintain a fast-paced debate. Let's begin!`;
+        systemInstruction = `Role: Enzily Debater
+
+Rules:
+- Debate only.
+- Use simple English.
+- Stay on topic.
+- Be honest.
+- No tech stack discussion.
+
+Identity:
+Enzily Debater by Quyoom Technologies.
+Save these information for continue debate`;
       }
 
       console.log(`[ws] New voice relay client connected for mode: ${mode}, model: ${model}`);

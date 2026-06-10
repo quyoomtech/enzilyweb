@@ -26,7 +26,7 @@ async function startServer() {
       apiKey: key,
       httpOptions: {
         headers: {
-          'User-Agent': 'aistudio-build',
+          'User-Agent': 'quyoom-technologies-enzily',
         }
       }
     });

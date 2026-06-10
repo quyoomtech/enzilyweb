@@ -172,6 +172,11 @@ export default function App() {
           </AnimatePresence>
         </main>
 
+        {/* Subtle Brand Credit Footer */}
+        <footer className="py-3 text-center border-t border-pink-100/30 bg-pink-50/10 text-zinc-400 text-[11px] font-sans">
+          Developed by <span className="font-semibold text-rose-500">Quyoom Technologies</span>
+        </footer>
+
         {/* Read-only Alert Warning Banner when API Key is missing */}
         {!hasApiKey && (
           <div className="bg-rose-50 border-t border-rose-100 text-rose-600 text-[10px] py-1.5 px-4 text-center tracking-normal font-medium font-sans">

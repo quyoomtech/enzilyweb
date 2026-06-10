@@ -266,6 +266,9 @@ You should defend the opposite side of whatever stance the User takes. Keep your
         }
       });
 
+      // Send a status message to the client indicating the Gemini session has been fully established
+      clientWs.send(JSON.stringify({ status: "connected" }));
+
       clientWs.on("message", async (data) => {
         try {
           const msg = JSON.parse(data.toString());

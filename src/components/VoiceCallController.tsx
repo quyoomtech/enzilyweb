@@ -245,7 +245,7 @@ export default function VoiceCallController({
         const instruction = SYSTEM_INSTRUCTIONS[mode];
         const setupMsg = {
           setup: {
-            model: "models/gemini-2.0-flash-exp",
+            model: "models/gemini-3.1-flash-live-preview",
             generationConfig: {
               responseModalities: ["AUDIO"],
               speechConfig: {
@@ -385,15 +385,20 @@ export default function VoiceCallController({
 
       ws.onopen = () => {
         setIsStarted(true);
-        isSessionStartedRef.current = true;
-        setIsConnecting(false);
-        setSessionState('listening');
-        playStartSound();
+        setSessionState('thinking');
       };
 
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          
+          if (data.status === 'connected') {
+            isSessionStartedRef.current = true;
+            setIsConnecting(false);
+            setSessionState('listening');
+            playStartSound();
+            return;
+          }
           
           if (data.audio) {
             setSessionState('speaking');
